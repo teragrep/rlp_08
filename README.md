@@ -26,8 +26,10 @@ Run with
 java -jar rlp_08.jar
 ```
 
-Defaults to port 1601 with no tls.
+Listening port can be changed with `-Dport=1234`. Default `1234`
 
-Listening port can be changed with `-Dport=1234`.
+TLS can be enabled with `-Dtls=true`. Default `false`
 
-TLS can be enabled with `-Dtls=true`
+Server thread count can be set with `-Dthreads=8`. Default 1.
+
+Events received reporting interval can be enabled with `-DmetricsInterval=60`. Default 0 (disabled)
