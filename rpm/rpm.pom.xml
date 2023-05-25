@@ -11,9 +11,9 @@
   <groupId>com.teragrep</groupId>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <java.version>1.8</java.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <java.version>17</java.version>
     <revision>0.0.1</revision>
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
@@ -80,9 +80,6 @@
               </sources>
             </mapping>
           </mappings>
-          <requires>
-            <require>java-1.8.0-openjdk-headless</require>
-          </requires>
         </configuration>
       </plugin>
       <plugin>
