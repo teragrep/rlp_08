@@ -20,7 +20,7 @@
     <dependency>
       <groupId>com.teragrep</groupId>
       <artifactId>rlp_03</artifactId>
-      <version>1.7.6</version>
+      <version>7.0.0</version>
     </dependency>
     <!-- logging -->
     <dependency>
