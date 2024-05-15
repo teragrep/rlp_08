@@ -19,6 +19,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -53,63 +54,22 @@ class Main {
         System.out.println("----");
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
         int metricsInterval = Integer.parseInt(System.getProperty("metricsInterval", "0"));
-        Consumer<FrameContext> syslogConsumer;
-        if(metricsInterval > 0) {
-            syslogConsumer = new Consumer<FrameContext>() {
-                @Override
-                public synchronized void accept(FrameContext frameContext) {
-                    try(RelpFrame frame = frameContext.relpFrame()) {
-                        totalBytes.mark(frame.payload().size());
-                        totalRecords.mark();
-                    }
-                }
-            };
-            MetricRegistry metricRegistry = new MetricRegistry();
-            metricRegistry.register(name("total", "records"), totalRecords);
-            metricRegistry.register(name("total", "bytes"), totalBytes);
-            ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
-                    .convertRatesTo(TimeUnit.SECONDS)
-                    .build();
-            reporter.start(metricsInterval, TimeUnit.SECONDS);
-            System.out.println("Metrics are printed every " + metricsInterval + " seconds");
-        }
-        else {
-            syslogConsumer = new Consumer<FrameContext>() {
-                @Override
-                public synchronized void accept(FrameContext frameContext) {
-                }
-            };
-        }
+        Consumer<FrameContext> syslogConsumer = createSyslogConsumer(metricsInterval);
         DefaultFrameDelegate frameDelegate = new DefaultFrameDelegate(syslogConsumer);
-        Supplier<FrameDelegate> frameDelegateSupplier = () -> frameDelegate;
+        Supplier<FrameDelegate> frameDelegateSupplier = new Supplier<>() {
+            @Override
+            public FrameDelegate get() {
+                return frameDelegate;
+            }
+        };
         EventLoopFactory eventLoopFactory = new EventLoopFactory();
-        EventLoop eventLoop;
-        try {
-            eventLoop = eventLoopFactory.create();
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        EventLoop eventLoop = eventLoopFactory.create();
         Thread eventLoopThread = new Thread(eventLoop);
         eventLoopThread.start();
-        SocketFactory factory;
-        if(tls) {
-            InputStream keyStoreStream = Main.class.getClassLoader().getResourceAsStream("keystore-server.jks");
-            SSLContext sslContext = SSLDemoContextFactory.authenticatedContext(keyStoreStream, "changeit", "TLSv1.3");
-            Function<SSLContext, SSLEngine> sslEngineFunction = sslContext1 -> {
-                SSLEngine sslEngine = sslContext1.createSSLEngine();
-                sslEngine.setUseClientMode(false);
-                return sslEngine;
-            };
-            factory = new TLSFactory(sslContext, sslEngineFunction);
-        }
-        else {
-            factory = new PlainFactory();
-        }
         ServerFactory serverFactory = new ServerFactory(
                 eventLoop,
                 executorService,
-                factory,
+                createSocketFactory(tls),
                 frameDelegateSupplier
         );
         System.out.println("Starting " + (tls ? "tls" : "plain") + "server with <" + threads + "> thread(s) at port <" + port + ">");
@@ -119,5 +79,50 @@ class Main {
         eventLoopThread.join();
         frameDelegate.close();
         executorService.shutdown();
+    }
+
+    private static Consumer<FrameContext> createSyslogConsumer(int metricsInterval) {
+        if(metricsInterval > 0) {
+            MetricRegistry metricRegistry = new MetricRegistry();
+            metricRegistry.register(name("total", "records"), totalRecords);
+            metricRegistry.register(name("total", "bytes"), totalBytes);
+            ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .build();
+            reporter.start(metricsInterval, TimeUnit.SECONDS);
+            System.out.println("Metrics are printed every " + metricsInterval + " seconds");
+            return new Consumer<>() {
+                @Override
+                public synchronized void accept(FrameContext frameContext) {
+                    try (RelpFrame frame = frameContext.relpFrame()) {
+                        totalBytes.mark(frame.payload().size());
+                        totalRecords.mark();
+                    }
+                }
+            };
+        }
+        else {
+            return new Consumer<>() {
+                @Override
+                public synchronized void accept(FrameContext frameContext) {
+                }
+            };
+        }
+    }
+
+    private static SocketFactory createSocketFactory(boolean useTls) throws GeneralSecurityException, IOException {
+        if(useTls) {
+            InputStream keyStoreStream = Main.class.getClassLoader().getResourceAsStream("keystore-server.jks");
+            SSLContext sslContext = SSLDemoContextFactory.authenticatedContext(keyStoreStream, "changeit", "TLSv1.3");
+            Function<SSLContext, SSLEngine> sslEngineFunction = sslContext1 -> {
+                SSLEngine sslEngine = sslContext1.createSSLEngine();
+                sslEngine.setUseClientMode(false);
+                return sslEngine;
+            };
+            return new TLSFactory(sslContext, sslEngineFunction);
+        }
+        else {
+            return new PlainFactory();
+        }
     }
 }
