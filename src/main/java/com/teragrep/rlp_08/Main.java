@@ -55,13 +55,7 @@ class Main {
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
         int metricsInterval = Integer.parseInt(System.getProperty("metricsInterval", "0"));
         Consumer<FrameContext> syslogConsumer = createSyslogConsumer(metricsInterval);
-        DefaultFrameDelegate frameDelegate = new DefaultFrameDelegate(syslogConsumer);
-        Supplier<FrameDelegate> frameDelegateSupplier = new Supplier<>() {
-            @Override
-            public FrameDelegate get() {
-                return frameDelegate;
-            }
-        };
+        Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate(syslogConsumer);
         EventLoopFactory eventLoopFactory = new EventLoopFactory();
         EventLoop eventLoop = eventLoopFactory.create();
         Thread eventLoopThread = new Thread(eventLoop);
@@ -77,7 +71,6 @@ class Main {
         Thread.sleep(Integer.MAX_VALUE);
         eventLoop.stop();
         eventLoopThread.join();
-        frameDelegate.close();
         executorService.shutdown();
     }
 
