@@ -68,7 +68,7 @@ class Main {
         );
         System.out.println("Starting " + (tls ? "tls" : "plain") + "server with <" + threads + "> thread(s) at port <" + port + ">");
         Server server = serverFactory.create(port);
-        Thread.sleep(Integer.MAX_VALUE);
+        Thread.sleep(Long.MAX_VALUE);
         eventLoop.stop();
         eventLoopThread.join();
         executorService.shutdown();
