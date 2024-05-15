@@ -87,10 +87,8 @@ class Main {
             return new Consumer<>() {
                 @Override
                 public synchronized void accept(FrameContext frameContext) {
-                    try (RelpFrame frame = frameContext.relpFrame()) {
-                        totalBytes.mark(frame.payload().size());
-                        totalRecords.mark();
-                    }
+                    totalBytes.mark(frameContext.relpFrame().payload().size());
+                    totalRecords.mark();
                 }
             };
         }
