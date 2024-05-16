@@ -86,7 +86,7 @@ class Main {
     private static Consumer<FrameContext> createSyslogConsumer(int metricsInterval) {
         if(metricsInterval > 0) {
             return frameContext -> {
-                totalBytes.mark(frameContext.relpFrame().payloadLength().toInt());
+                totalBytes.mark(frameContext.relpFrame().payloadLength().size());
                 totalRecords.mark();
             };
         }
