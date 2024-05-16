@@ -54,8 +54,17 @@ class Main {
         System.out.println("----");
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
         int metricsInterval = Integer.parseInt(System.getProperty("metricsInterval", "0"));
-        Consumer<FrameContext> syslogConsumer = createSyslogConsumer(metricsInterval);
-        Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate(syslogConsumer);
+        if(metricsInterval > 0) {
+            MetricRegistry metricRegistry = new MetricRegistry();
+            metricRegistry.register(name("total", "records"), totalRecords);
+            metricRegistry.register(name("total", "bytes"), totalBytes);
+            ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
+                    .convertRatesTo(TimeUnit.SECONDS)
+                    .build();
+            reporter.start(metricsInterval, TimeUnit.SECONDS);
+            System.out.println("Metrics are printed every " + metricsInterval + " seconds");
+        }
+        Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate(createSyslogConsumer(metricsInterval));
         EventLoopFactory eventLoopFactory = new EventLoopFactory();
         EventLoop eventLoop = eventLoopFactory.create();
         Thread eventLoopThread = new Thread(eventLoop);
@@ -76,27 +85,13 @@ class Main {
 
     private static Consumer<FrameContext> createSyslogConsumer(int metricsInterval) {
         if(metricsInterval > 0) {
-            MetricRegistry metricRegistry = new MetricRegistry();
-            metricRegistry.register(name("total", "records"), totalRecords);
-            metricRegistry.register(name("total", "bytes"), totalBytes);
-            ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
-                    .convertRatesTo(TimeUnit.SECONDS)
-                    .build();
-            reporter.start(metricsInterval, TimeUnit.SECONDS);
-            System.out.println("Metrics are printed every " + metricsInterval + " seconds");
-            return new Consumer<>() {
-                @Override
-                public synchronized void accept(FrameContext frameContext) {
-                    totalBytes.mark(frameContext.relpFrame().payload().size());
-                    totalRecords.mark();
-                }
+            return frameContext -> {
+                totalBytes.mark(frameContext.relpFrame().payloadLength().toInt());
+                totalRecords.mark();
             };
         }
         else {
-            return new Consumer<>() {
-                @Override
-                public synchronized void accept(FrameContext frameContext) {
-                }
+            return frameContext -> {
             };
         }
     }
