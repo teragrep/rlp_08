@@ -48,17 +48,15 @@ class Main {
 
     private static final Meter totalRecords = new Meter(new SlidingTimeWindowMovingAverages());
     private static final Meter totalBytes = new Meter(new SlidingTimeWindowMovingAverages());
-    private static int threads;
     private static Consumer<FrameContext> syslogConsumer;
     private static ExecutorService executorService;
     private static EventLoop eventLoop;
-    private static Thread eventLoopThread;
     private static Supplier<FrameDelegate> frameDelegateSupplier;
 
     public static void main(String[] args) throws IOException, InterruptedException, GeneralSecurityException {
         int port = Integer.parseInt(System.getProperty("port", "1601"));
         boolean tls = Boolean.parseBoolean(System.getProperty("tls", "false"));
-        threads = Integer.parseInt(System.getProperty("threads", "1"));
+        int threads = Integer.parseInt(System.getProperty("threads", "1"));
         executorService = Executors.newFixedThreadPool(threads);
         System.out
                 .println(
@@ -103,7 +101,7 @@ class Main {
         frameDelegateSupplier = () -> new DefaultFrameDelegate(syslogConsumer);
         EventLoopFactory eventLoopFactory = new EventLoopFactory();
         eventLoop = eventLoopFactory.create();
-        eventLoopThread = new Thread(eventLoop);
+        Thread eventLoopThread = new Thread(eventLoop);
         eventLoopThread.start();
 
         if (tls) {
