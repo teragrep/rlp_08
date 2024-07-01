@@ -135,8 +135,8 @@ class Main {
     private static void tlsServer(int port) throws GeneralSecurityException, IOException {
         InputStream keyStoreStream = Main.class.getClassLoader().getResourceAsStream("keystore-server.jks");
         SSLContext sslContext = SSLDemoContextFactory.authenticatedContext(keyStoreStream, "changeit", "TLSv1.3");
-        Function<SSLContext, SSLEngine> sslEngineFunction = sslContext1 -> {
-            SSLEngine sslEngine = sslContext1.createSSLEngine();
+        Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+            SSLEngine sslEngine = context.createSSLEngine();
             sslEngine.setUseClientMode(false);
             return sslEngine;
         };
