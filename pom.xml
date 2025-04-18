@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.teragrep</groupId>
@@ -6,37 +7,40 @@
   <packaging>jar</packaging>
   <name>rlp_08</name>
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <changelist>-SNAPSHOT</changelist>
+    <dropwizard-metrics.version>4.2.26</dropwizard-metrics.version>
+    <java.version>17</java.version>
+    <log4j.version>2.23.1</log4j.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <revision>0.0.1</revision>
-    <changelist>-SNAPSHOT</changelist>
-    <sha1/>
-    <dropwizard-metrics.version>4.2.18</dropwizard-metrics.version>
+    <rlp_03.version>8.0.0</rlp_03.version>
+    <sha1></sha1>
+    <slf4j.version>2.0.13</slf4j.version>
   </properties>
   <dependencies>
     <!-- java relp server -->
     <dependency>
       <groupId>com.teragrep</groupId>
       <artifactId>rlp_03</artifactId>
-      <version>1.7.6</version>
+      <version>${rlp_03.version}</version>
     </dependency>
     <!-- logging -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <version>2.19.0</version>
+      <version>${log4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j2-impl</artifactId>
-      <version>2.19.0</version>
+      <version>${log4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>2.0.5</version>
+      <version>${slf4j.version}</version>
     </dependency>
     <!-- dropwizard metrics -->
     <dependency>
@@ -46,12 +50,152 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>${artifactId}</finalName>
+    <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.4.1</version>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.2.5</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>enforce</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>2.43.0</version>
+        <configuration>
+          <java>
+            <eclipse>
+              <file>${project.basedir}/eclipse-java-formatter.xml</file>
+              <version>4.10.0</version>
+            </eclipse>
+            <removeUnusedImports></removeUnusedImports>
+            <licenseHeader>
+              <file>${project.basedir}/license-header</file>
+            </licenseHeader>
+          </java>
+          <pom>
+            <sortPom>
+              <!-- see https://github.com/diffplug/spotless/blob/main/plugin-maven/README.md#sortpom -->
+              <encoding>UTF-8</encoding>
+              <lineSeparator>\n</lineSeparator>
+              <expandEmptyElements>true</expandEmptyElements>
+              <keepBlankLines>false</keepBlankLines>
+              <nrOfIndentSpace>2</nrOfIndentSpace>
+              <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
+              <sortProperties>true</sortProperties>
+              <sortModules>true</sortModules>
+              <sortExecutions>true</sortExecutions>
+            </sortPom>
+          </pom>
+          <formats>
+            <format>
+              <includes>
+                <include>.gitattributes</include>
+                <include>.gitignore</include>
+              </includes>
+              <trimTrailingWhitespace></trimTrailingWhitespace>
+              <endWithNewline></endWithNewline>
+              <indent>
+                <tabs>true</tabs>
+                <spacesPerTab>4</spacesPerTab>
+              </indent>
+            </format>
+          </formats>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <version>0.16.1</version>
+        <inherited>false</inherited>
+        <configuration>
+          <addDefaultLicenseMatchers>false</addDefaultLicenseMatchers>
+          <addDefaultLicenses>false</addDefaultLicenses>
+          <families>
+            <family>
+              <id>Teragrep</id>
+              <name>Apache License</name>
+            </family>
+          </families>
+          <licenses>
+            <license>
+              <all>
+                <copyright>
+                  <owner>Suomen Kanuuna Oy</owner>
+                  <start>2024</start>
+                </copyright>
+                <text>Null routing relp server rlp_08</text>
+              </all>
+              <family>Teragrep</family>
+            </license>
+          </licenses>
+          <consoleOutput>true</consoleOutput>
+          <excludeSubProjects>false</excludeSubProjects>
+          <excludes>
+            <!-- git -->
+            <exclude>.git/**</exclude>
+            <exclude>.gitattributes</exclude>
+            <exclude>.gitignore</exclude>
+            <exclude>.gitmodules</exclude>
+            <!-- ci -->
+            <exclude>.github/workflows/*</exclude>
+            <exclude>.github/ISSUE_TEMPLATE/*</exclude>
+            <exclude>toolchains.xml</exclude>
+            <exclude>settings.xml</exclude>
+            <!-- maven -->
+            <exclude>rpm/rpm.pom.xml</exclude>
+            <exclude>pom.xml</exclude>
+            <exclude>eclipse-java-formatter.xml</exclude>
+            <exclude>license-header</exclude>
+            <!-- assembly file -->
+            <exclude>src/main/assembly/jar-with-dependencies.xml</exclude>
+            <!-- rpm -->
+            <exclude>rpm/pom.xml</exclude>
+            <!-- Docker -->
+            <exclude>Dockerfile</exclude>
+            <!-- readme -->
+            <exclude>README.md</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>test</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>3.2.5</version>
         <configuration>
           <parallel>all</parallel>
           <useUnlimitedThreads>true</useUnlimitedThreads>
@@ -60,7 +204,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.12.1</version>
         <configuration>
           <compilerArgument>-Xlint:all</compilerArgument>
         </configuration>
@@ -68,7 +212,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
+        <version>3.3.0</version>
         <configuration>
           <archive>
             <manifest>
@@ -81,7 +225,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.6.0</version>
         <configuration>
           <descriptors>
             <descriptor>src/main/assembly/jar-with-dependencies.xml</descriptor>
@@ -96,10 +240,10 @@
         <executions>
           <execution>
             <id>make-assembly</id>
-            <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>
@@ -108,19 +252,26 @@
   <profiles>
     <profile>
       <id>publish-github-packages</id>
+      <distributionManagement>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages</name>
+          <url>https://maven.pkg.github.com/${env.GITHUB_REPOSITORY}</url>
+        </repository>
+      </distributionManagement>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
+            <version>3.2.4</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
-                <phase>verify</phase>
                 <goals>
                   <goal>sign</goal>
                 </goals>
+                <phase>verify</phase>
                 <configuration>
                   <gpgArguments>
                     <arg>--pinentry-mode</arg>
@@ -132,13 +283,6 @@
           </plugin>
         </plugins>
       </build>
-      <distributionManagement>
-        <repository>
-          <id>github</id>
-          <name>GitHub Packages</name>
-          <url>https://maven.pkg.github.com/${env.GITHUB_REPOSITORY}</url>
-        </repository>
-      </distributionManagement>
     </profile>
   </profiles>
 </project>
